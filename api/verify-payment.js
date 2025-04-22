@@ -1,24 +1,36 @@
-import axios from 'axios';
+// api/verify-payment.js
+const { PI_API_SECRET } = process.env;
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send({ error: 'Méthode non autorisée' });
+export default async (req, res) => {
+  if (req.method === 'POST') {
+    const { paymentId } = req.body;
 
-  const { paymentId } = req.body;
-
-  try {
-    const response = await axios.get(`https://api.minepi.com/v2/payments/${paymentId}`, {
-      headers: {
-        Authorization: `Key ${process.env.PI_API_SECRET}`
-      }
-    });
-
-    const payment = response.data;
-    if (payment.status === 'COMPLETED') {
-      return res.status(200).json({ message: 'Paiement validé avec succès' });
-    } else {
-      return res.status(400).json({ error: 'Paiement non complété' });
+    if (!paymentId) {
+      return res.status(400).json({ error: 'paymentId manquant' });
     }
-  } catch (err) {
-    return res.status(500).json({ error: 'Erreur serveur', details: err.message });
+
+    try {
+      // Vérification du paiement avec l'API Pi
+      const response = await fetch(`https://api.minepi.com/payment/${paymentId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PI_API_SECRET}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return res.status(200).json({ success: true, message: 'Paiement validé' });
+      } else {
+        return res.status(400).json({ error: 'Paiement échoué' });
+      }
+
+    } catch (error) {
+      return res.status(500).json({ error: 'Erreur de communication avec l\'API Pi' });
+    }
+  } else {
+    return res.status(405).json({ error: 'Méthode non autorisée' });
   }
-}
+};

@@ -5,6 +5,7 @@ export const makePiPayment = async () => {
   }
 
   // Initialisation du SDK Pi
+  console.log("window.Pi SDK:", window.Pi);
   window.Pi.init({
     version: "2.0",
     sandbox: true // Toujours activer le mode Testnet

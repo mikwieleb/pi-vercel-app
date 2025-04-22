@@ -1,22 +1,29 @@
 export const makePiPayment = async () => {
-  if (!window.Pi) {
+  if (typeof window.Pi === 'undefined') {
     alert('Pi SDK non chargé.');
     return;
   }
 
-  // Initialisation obligatoire du SDK
+  // Initialisation du SDK Pi
   window.Pi.init({
-    version: "2.0", // ou "1.0" si c’est une ancienne version
-    sandbox: true   // important pour le testnet !
+    version: "2.0",
+    sandbox: true // Toujours activer le mode Testnet
   });
 
   try {
+    // Création du paiement
     const payment = await window.Pi.createPayment({
       amount: 0.001,
       memo: "Paiement test Pi",
       metadata: { type: "test-payment" }
     });
 
+    if (!payment.identifier) {
+      alert('Erreur : Payment identifier non trouvé.');
+      return;
+    }
+
+    // Vérification du paiement côté backend
     const res = await fetch('/api/verify-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,7 +34,7 @@ export const makePiPayment = async () => {
     if (res.ok) {
       alert('Paiement validé !');
     } else {
-      alert('Erreur : ' + result.error);
+      alert('Erreur : ' + result.error || 'Erreur inconnue');
     }
 
   } catch (error) {
